@@ -1,0 +1,102 @@
+Jane 0.1
+========
+
+What is Jane?
+--------------
+Jane stores your thoughts and ideas as notes to yourself.
+
+Why is it called Jane?
+----------------------
+Because Jane is Another Note Editor?
+
+What can it do, in its present form?
+------------------------------------
+If you are in the habit of keeping notes, or a diary, or a journal of
+your activities, Jane can keep them organised and accessible.
+
+That's nice, but does it ever do anything useful?
+-------------------------------------------------
+If it does, it does it when I'm not looking. Besides, if it did, do you think
+I would be giving it away free?
+
+While there is no guarantee that it will do anything useful, or anything at all,
+there is every probability of the version number increasing in the future as
+and when I get the time to add more features (especially if anyone asks).
+
+Availability
+------------
+Jane is available as source code to compile on your own machine.
+
+Compiling the source
+--------------------
+All the source files are available on Github under the following link:
+https://github.com/letapk/jane
+
+The repository is public. Anyone can check out the branch onto her local machine.
+
+In addition, you will need the libraries and developement files from Qt, which are
+available from the depository of your Linux distribution or from www.qt.io.
+
+If you are using QtCreator, load the project file jane.pro which is available in the source
+package. Select the version you want to build (debug version or release version) and hit
+Ctrl-B. If there are no problems, this should build the binary.
+
+The program has been compiled and tested on version 5.15.2 of Qt, under Ubuntu
+22.04.3.
+
+The binary may be stored locally in a directoriy separate from the source subdirectory,
+depending on how QtCreator is configured. This location will be available within QtCreator.
+
+If you are not using QtCreator, running the comand:
+qmake jane.pro
+should create a Makefile for your system. Then, running:
+make
+should create a running binary.
+
+When the program is executed, Jane searches for a hidden subdirectory called
+“.jane”. If this is absent (which will be the case when it is executed the first
+time) it issues a notification that it will be created. Subsequently all data is
+stored in this subdirectory.
+
+Exit the program and copy the help and image files in the downloaded package to the
+hidden data subdirectory. Either use a file manager or open a terminal and do the
+following from within the Jane subdirectory:
+
+cp janehelp.* ~/.jane
+cp COPYING ~/.jane
+
+Remember to put the dot (".") in the right place. This will make the on-line help
+available when the program is running.
+
+If you are using QtCreator, the location of the locally compiled binary will be
+available from within QtCreator. If not, the binary will be in the same location as the
+source files. From this location copy the binary to a place from where everyone working
+on the computer can run it.
+
+From the subdirectory containing the binary do:
+sudo cp ./jane /usr/local/bin/jane
+Enter your user password when prompted.
+
+What is the copying policy?
+---------------------------
+While Jane is copyright, (C) 2001 onwards, Kartik Patel  the program is also free
+software; you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by  the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.  This program
+is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You
+will receive a copy of the GNU General Public License along with this program;
+for more information, write to the Free Software  oundation, Inc., 675 Mass
+Ave, Cambridge, MA 02139, USA.
+
+What else?
+----------
+That covers it, more or less. Email me if there is anything left out, or there are
+problems in installation.
+
+Enjoy!
+
+Kartik Patel
+letapk@gmail.com
+https://letapk.wordpress.com
