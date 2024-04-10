@@ -15,7 +15,7 @@ email                : letapk@gmail.com
 
 */
 
-//Last modified 18 Feb 2024
+//Last modified 9 April 2024
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
@@ -42,6 +42,14 @@ email                : letapk@gmail.com
 #include <QTextCharFormat>
 #include <QFontComboBox>
 #include <QTranslator>
+#include <QActionGroup>
+#include <QtSpell-qt5/QtSpell.hpp>
+
+#include <QLibraryInfo>
+//#include <QCheckBox>
+//#include <QVBoxLayout>
+//#include <QDialogButtonBox>
+//#include <QPushButton>
 
 namespace Ui {
 class MainWindow;
@@ -50,6 +58,7 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
 
+    Q_OBJECT
     QMenu *filemenu, *helpmenu;
 
     //toolbar and its contents
@@ -110,7 +119,9 @@ class MainWindow : public QMainWindow
 
     void resizeEvent(QResizeEvent *);
 
-    Q_OBJECT
+    //Q_OBJECT
+
+    QtSpell::TextEditChecker* checker;
 
 public:
     explicit MainWindow(QWidget *parent = 0);

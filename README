@@ -1,4 +1,4 @@
-Jane 0.1
+Jane 0.2
 ========
 
 What is Jane?
@@ -27,6 +27,15 @@ Availability
 ------------
 Jane is available as source code to compile on your own machine.
 
+Changes in version 0.2
+----------------------
+Added spellcheck functionality. Wrongly spelled words are underlined and can be corrected
+through a right click, and selecting the correct word from the pop-up that appears.
+
+Changes in version 0.2
+----------------------
+Initial release.
+
 Compiling the source
 --------------------
 All the source files are available on Github under the following link:
@@ -37,11 +46,18 @@ The repository is public. Anyone can check out the branch onto her local machine
 In addition, you will need the libraries and developement files from Qt, which are
 available from the depository of your Linux distribution or from www.qt.io.
 
+You will also need the spellcheck package for Qt (libqtspell-qt5-dev) which may be available
+from the package manager of your distribution. Alternatively it can be obtained from
+GitHub ("https://github.com/Qt-Widgets/qtspell-spelling-checker").
+
+Since the spellcheck code requires the enchant spell-checking library, that will have to be
+installed as well. This should be available through the package manager as well.
+
 If you are using QtCreator, load the project file jane.pro which is available in the source
 package. Select the version you want to build (debug version or release version) and hit
 Ctrl-B. If there are no problems, this should build the binary.
 
-The program has been compiled and tested on version 5.15.2 of Qt, under Ubuntu
+The program has been compiled and tested on version 5.15.3 of Qt, under Ubuntu
 22.04.3.
 
 The binary may be stored locally in a directoriy separate from the source subdirectory,
@@ -79,7 +95,7 @@ Enter your user password when prompted.
 
 What is the copying policy?
 ---------------------------
-While Jane is copyright, (C) 2001 onwards, Kartik Patel  the program is also free
+While Jane is copyright, (C) 2024 onwards, Kartik Patel  the program is also free
 software; you can redistribute it and/or modify it under the terms of the GNU
 General Public License as published by  the Free Software Foundation; either
 version 2 of the License, or (at your option) any later version.  This program

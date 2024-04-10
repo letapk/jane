@@ -15,7 +15,7 @@ email                : letapk@gmail.com
 
 */
 
-//Last modified 30 Jan 2024
+//Last modified 9 April 2024
 
 #include <QHeaderView>
 #include <QInputDialog>
@@ -34,14 +34,6 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(jane);
     QApplication app(argc, argv);
 
-    QTranslator appTranslator;
-    appTranslator.load("jane_" + QLocale::system().name(), qApp->applicationDirPath());
-    app.installTranslator(&appTranslator);
-
-    QTranslator qtTranslator;
-    qtTranslator.load("qt_" + QLocale::system().name(), qApp->applicationDirPath());
-    app.installTranslator(&qtTranslator);
-
     //get the path to the user's home directory
     userpath.clear();
     //home/{account-name}
@@ -53,7 +45,7 @@ int main(int argc, char *argv[])
     check_qtdata_dir();
 
     MainWindow mainwindow;
-    mainwindow.setWindowTitle(QObject::tr("Jane 0.1"));
+    mainwindow.setWindowTitle(QObject::tr("Jane 0.2"));
 
     mainwindow.show();
 
@@ -221,6 +213,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     searchthisnotebut->setGeometry(880, 720, 80, 35);
     searchthisnotebut->setToolTip(tr("Click to begin search"));
     connect (searchthisnotebut, SIGNAL(clicked()), this, SLOT(search_this_note()));
+
+    checker = new QtSpell::TextEditChecker(this);
+    checker->setTextEdit(listeditor);
 
     //read the data file and show the first note
     initialize ();

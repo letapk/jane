@@ -15,7 +15,7 @@ email                : letapk@gmail.com
 
 */
 
-//Last modified 30 Jan 2024
+//Last modified 9 April 2024
 
 #include "jane.h"
 #include <QFileDialog>
@@ -109,7 +109,7 @@ int w, h;
     w = width();
     h = height();
 
-    tb->resize(w - 20, 35);
+    tb->resize(w - 20, 37);
 
     //resize the tree
     listree->setGeometry(10, 110, 300, h - 155);
@@ -144,12 +144,12 @@ void MainWindow::setuptoolbar()
     //toolbar for the editor
     tb = new QToolBar;
     tb->setParent (this);
-    tb->setGeometry(10, 30, 1080, 35);
+    tb->setGeometry(10, 37, 1080, 35);
     tb->setFloatable (false);
     tb->setMovable(false);
 
-    actionTextBold = new QAction(QIcon::fromTheme("", QIcon(":/images/textbold.png")), tr("&Bold"), this);
-    actionTextBold->setShortcut(Qt::CTRL + Qt::Key_B);
+    actionTextBold = new QAction(QIcon::fromTheme("", QIcon(":/images/textbold.png")), tr("&Bold, Ctrl-B"), this);
+    actionTextBold->setShortcut(Qt::CTRL | Qt::Key_B);
     actionTextBold->setPriority(QAction::LowPriority);
     QFont bold;
     bold.setBold(true);
@@ -158,9 +158,9 @@ void MainWindow::setuptoolbar()
     tb->addAction(actionTextBold);
     actionTextBold->setCheckable(true);
 
-    actionTextItalic = new QAction(QIcon::fromTheme("", QIcon(":/images/textitalic.png")), tr("&Italic"), this);
+    actionTextItalic = new QAction(QIcon::fromTheme("", QIcon(":/images/textitalic.png")), tr("&Italic, Ctrl-I"), this);
     actionTextItalic->setPriority(QAction::LowPriority);
-    actionTextItalic->setShortcut(Qt::CTRL + Qt::Key_I);
+    actionTextItalic->setShortcut(Qt::CTRL | Qt::Key_I);
     QFont italic;
     italic.setItalic(true);
     actionTextItalic->setFont(italic);
@@ -168,8 +168,8 @@ void MainWindow::setuptoolbar()
     tb->addAction(actionTextItalic);
     actionTextItalic->setCheckable(true);
 
-    actionTextUnderline = new QAction(QIcon::fromTheme("", QIcon(":/images/textunder.png")), tr("&Underline"), this);
-    actionTextUnderline->setShortcut(Qt::CTRL + Qt::Key_U);
+    actionTextUnderline = new QAction(QIcon::fromTheme("", QIcon(":/images/textunder.png")), tr("&Underline, Ctrl-U"), this);
+    actionTextUnderline->setShortcut(Qt::CTRL | Qt::Key_U);
     actionTextUnderline->setPriority(QAction::LowPriority);
     QFont underline;
     underline.setUnderline(true);
@@ -181,21 +181,21 @@ void MainWindow::setuptoolbar()
     QActionGroup *grp = new QActionGroup(this);
     connect(grp, SIGNAL(triggered(QAction*)), this, SLOT(textAlign(QAction*)));
 
-    actionAlignLeft = new QAction(QIcon::fromTheme("", QIcon(":/images/textleft.png")),tr("&Left"), grp);
-    actionAlignCenter = new QAction(QIcon::fromTheme("",QIcon(":/images/textcenter.png")),tr("C&enter"), grp);
-    actionAlignRight = new QAction(QIcon::fromTheme("",QIcon(":/images/textright.png")),tr("&Right"), grp);
-    actionAlignJustify = new QAction(QIcon::fromTheme("",QIcon(":/images/textjustify.png")),tr("&Justify"), grp);
+    actionAlignLeft = new QAction(QIcon::fromTheme("", QIcon(":/images/textleft.png")),tr("&Left, Ctrl-L"), grp);
+    actionAlignCenter = new QAction(QIcon::fromTheme("",QIcon(":/images/textcenter.png")),tr("C&enter, Ctrl-E"), grp);
+    actionAlignRight = new QAction(QIcon::fromTheme("",QIcon(":/images/textright.png")),tr("&Right, Ctrl-R"), grp);
+    actionAlignJustify = new QAction(QIcon::fromTheme("",QIcon(":/images/textjustify.png")),tr("&Justify, Ctrl-J"), grp);
 
-    actionAlignLeft->setShortcut(Qt::CTRL + Qt::Key_L);
+    actionAlignLeft->setShortcut(Qt::CTRL | Qt::Key_L);
     actionAlignLeft->setCheckable(true);
     actionAlignLeft->setPriority(QAction::LowPriority);
-    actionAlignCenter->setShortcut(Qt::CTRL + Qt::Key_E);
+    actionAlignCenter->setShortcut(Qt::CTRL | Qt::Key_E);
     actionAlignCenter->setCheckable(true);
     actionAlignCenter->setPriority(QAction::LowPriority);
-    actionAlignRight->setShortcut(Qt::CTRL + Qt::Key_R);
+    actionAlignRight->setShortcut(Qt::CTRL | Qt::Key_R);
     actionAlignRight->setCheckable(true);
     actionAlignRight->setPriority(QAction::LowPriority);
-    actionAlignJustify->setShortcut(Qt::CTRL + Qt::Key_J);
+    actionAlignJustify->setShortcut(Qt::CTRL | Qt::Key_J);
     actionAlignJustify->setCheckable(true);
     actionAlignJustify->setPriority(QAction::LowPriority);
 

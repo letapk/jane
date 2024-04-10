@@ -1,6 +1,6 @@
-#Last modified 28 Jan 2024
+#Last modified 9 April 2024
 
-QT       += core gui
+QT += core gui
 
 #This should be uncommented to produce a compile time error
 #for string literals that are not enclosed within a tr()
@@ -18,10 +18,7 @@ SOURCES +=\
     janemisc.cpp \
     janeprefs.cpp
 
-HEADERS  += \
-    jane.h
-
-FORMS    +=
+HEADERS	= jane.h
 
 OTHER_FILES += \
     TODO \
@@ -32,4 +29,5 @@ OTHER_FILES += \
 RESOURCES += \
     jane.qrc
 
-TRANSLATIONS += jane_de.ts
+LIBS += -lqtspell-qt5
+
