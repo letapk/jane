@@ -32,7 +32,7 @@ Changes in version 0.2
 Added spellcheck functionality. Wrongly spelled words are underlined and can be corrected
 through a right click, and selecting the correct word from the pop-up that appears.
 
-Changes in version 0.2
+Changes in version 0.1
 ----------------------
 Initial release.
 
