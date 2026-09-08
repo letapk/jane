@@ -5,7 +5,6 @@ Jane
 begin                : 28 Jan 2024
 copyright            : (C) Kartik Patel
 email                : letapk@gmail.com
-
 *                                                                         *
 *   This program is free software; you can redistribute it and/or modify  *
 *   it under the terms of the GNU General Public License as published by  *
@@ -15,10 +14,17 @@ email                : letapk@gmail.com
 
 */
 
-//Last modified 28 Jan 2024
+//Last modified 5 Sep 2026
 
 #include "jane.h"
-#include <QTextCodec>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
+#include <QTextDocument>
+#include <QLabel>
+#include <QTextEdit>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QMessageBox>
 
 void MainWindow::save_list ()
 //item changed
@@ -28,6 +34,7 @@ QString s;
     s = listeditor->toHtml();
     cur_list->setText(1, s);
     modify_name(cur_list);
+    dataModified = true;
 }
 
 void MainWindow::set_list (QTreeWidgetItem *it)
@@ -50,7 +57,6 @@ QString s;
     }
 
     con_item = new QTreeWidgetItem (listree);
-
     s.clear();
     s.append(tr("New note"));
     con_item->setText(0, s);
@@ -62,6 +68,7 @@ QString s;
 
     listree->setCurrentItem(cur_list);
     listreeempty = false;
+    dataModified = true;
 
     statustext->setText(tr("Added an empty note"));
     show_list();
@@ -75,7 +82,6 @@ int i;
     //bring notes tab to foreground
     i = tabcontainer->indexOf(listed);
     tabcontainer->setCurrentIndex(i);
-
     //first way
     s.clear();
     s.append(cur_list->text(1));
@@ -86,27 +92,27 @@ int i;
     //doc->setHtml(cur_list->text(1));
     //listeditor->setDocument(doc);
 
-    //third way
-    //QByteArray data = (cur_list->text(1)).toUtf8();
-    //QTextCodec *codec = Qt::codecForHtml(data);
-    //s = codec->toUnicode(data);
-    //listeditor->setHtml(s);
 
 }
-
 void MainWindow::modify_name (QTreeWidgetItem *it)
 {
-QString s1, s;
-int i;
-QTextDocument doc;
+    QTextDocument doc;
+    doc.setHtml(it->text(1));
+    QString s = doc.toPlainText();
 
-    s1 = it->text(1);
-    doc.setHtml(s1);
-    s = doc.toPlainText();
+    //use the first line of the note as its tree title
+    int nl = s.indexOf(QLatin1Char('\n'));
+    if (nl >= 0)
+        s.truncate(nl);
 
-    for (i = 0; i < s.length(); i++){
-        if (s[i] == QChar (QLatin1Char('\n')))
-            s.chop (s.length() - i);
+    //truncate the title to the first five words, appending an ellipsis
+    //when there is more content, so the title does not mirror the whole note
+    const QStringList words = s.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    if (words.size() > 5) {
+        QString truncated = words.mid(0, 5).join(QLatin1Char(' '));
+        if (!truncated.endsWith(QLatin1Char('.')))
+            truncated += QLatin1String("...");
+        s = truncated;
     }
 
     it->setText(0, s);
@@ -116,12 +122,10 @@ void MainWindow::del_list ()
 {
 int j;
 QTreeWidgetItem *above, *below;
-QTextDocument *doc;
 QString s;
-
-    doc = new QTextDocument ();
-    doc->setHtml(cur_list->text(1));
-    s = doc->toPlainText();
+QTextDocument doc;
+    doc.setHtml(cur_list->text(1));
+    s = doc.toPlainText();
 
     if (s.length() != 0){
         statustext->setText(tr("Note contains data. Please delete that, first."));
@@ -129,14 +133,14 @@ QString s;
     }
 
     j = listree->indexOfTopLevelItem(cur_list);
+    dataModified = true;
 
     above = listree->itemAbove(cur_list);
     below = listree->itemBelow(cur_list);
 
     if (above != NULL){//there is an item above
-        listree->takeTopLevelItem(j);
+        delete listree->takeTopLevelItem(j);
         statustext->setText(tr("Note deleted"));
-
         listree->setCurrentItem(above);
         cur_list = above;
 
@@ -144,18 +148,20 @@ QString s;
         show_list();
     }
     else if (below != NULL) {//no item above but there is an item below
-        listree->takeTopLevelItem(j);
+        delete listree->takeTopLevelItem(j);
         statustext->setText(tr("Note deleted"));
 
-        listree->setCurrentItem(cur_list);
+        listree->setCurrentItem(below);
         cur_list = below;
-
         listreeempty = false;
         show_list();
     }
     else {//cur_list is the last item
-        listree->takeTopLevelItem(j);
+        delete listree->takeTopLevelItem(j);
         listreeempty = true;
+        con_item = new QTreeWidgetItem();
+        cur_list = con_item;
+        listeditor->clear();
         statustext->setText(tr("Last note deleted"));
     }
 }

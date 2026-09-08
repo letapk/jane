@@ -5,7 +5,6 @@ Jane
 begin                : 28 Jan 2024
 copyright            : (C) Kartik Patel
 email                : letapk@gmail.com
-
 *                                                                         *
 *   This program is free software; you can redistribute it and/or modify  *
 *   it under the terms of the GNU General Public License as published by  *
@@ -15,108 +14,193 @@ email                : letapk@gmail.com
 
 */
 
-//Last modified 28 Jan 2024
+//Last modified 5 Sep 2026
 
 #include "jane.h"
+#include <QSaveFile>
+#include <QFile>
+#include <QTreeWidget>
+#include <QLabel>
+#include <QPushButton>
+#include <QTextDocument>
+#include <QMessageBox>
+#include <QDataStream>
+#include <QTextStream>
+
+namespace {
+const quint32 JaneFileMagic = 0x4A414E45; // "JANE"
+const quint32 JaneFileVersion = 1;
+const quint32 MaxNotes = 100000;
+const quint32 MaxLegacyStringBytes = 64 * 1024 * 1024;
+
+bool readLegacyString(QDataStream &in, QString &value)
+{
+    quint32 declaredLength;
+    quint32 encodedLength;
+
+    in >> declaredLength;
+    if (in.status() != QDataStream::Ok ||
+        declaredLength > MaxLegacyStringBytes) {
+        return false;
+    }
+
+    // Older Jane files wrote the length twice: once explicitly and once
+    // through QDataStream::writeBytes().
+    in >> encodedLength;
+    if (in.status() != QDataStream::Ok ||
+        encodedLength != declaredLength ||
+        encodedLength > MaxLegacyStringBytes) {
+        return false;
+    }
+
+    QByteArray bytes(static_cast<int>(encodedLength), '\0');
+    if (encodedLength > 0 &&
+        in.readRawData(bytes.data(), static_cast<int>(encodedLength))
+            != static_cast<int>(encodedLength)) {
+        return false;
+    }
+
+    if (!bytes.isEmpty() && bytes.endsWith('\0'))
+        bytes.chop(1);
+
+    value = QString::fromLocal8Bit(bytes);
+    return in.status() == QDataStream::Ok;
+}
+
+bool writeNotes(QDataStream &out, QTreeWidget *listree)
+{
+    const int count = listree->topLevelItemCount();
+
+    out << JaneFileMagic;
+    out << JaneFileVersion;
+    out << static_cast<quint32>(count);
+
+    for (int i = 0; i < count; ++i) {
+        QTreeWidgetItem *it = listree->topLevelItem(i);
+        out << it->text(0);
+        out << it->text(1);
+    }
+
+    return out.status() == QDataStream::Ok;
+}
+}
 
 void MainWindow::read_lists()
 {
-QTreeWidgetItem *it;
-QFile file(Listfilename);
-QString *s;
-char *c;
-uint i, len, toplevelcount;
-bool ok;
+    QFile file(Listfilename);
 
-    ok = file.open(QFile::ReadOnly);
-    if (ok == false)
+    if (!file.open(QFile::ReadOnly))
         return;
 
     QDataStream in(&file);
+    quint32 header;
+    in >> header;
 
-    //number of lists
-    in >> toplevelcount;
+    if (in.status() != QDataStream::Ok)
+        return;
 
-    //loop over list
-    for (i = 0; i < toplevelcount; i++) {
-        it = new QTreeWidgetItem (listree);
-        listree->addTopLevelItem(it);
+    quint32 toplevelcount;
+    const bool newFormat = (header == JaneFileMagic);
 
-        in >> len;
-        c = new char[len];
-        in.readBytes(c, len);
-        s = new QString (c);
-        it->setText(0, *s);
-        delete s;
-
-        in >> len;
-        c = new char[len];
-        in.readBytes(c, len);
-        s = new QString (c);
-        it->setText(1, *s);
-        delete s;
+    if (newFormat) {
+        quint32 version;
+        in >> version;
+        if (in.status() != QDataStream::Ok ||
+            version > JaneFileVersion) {
+            return;
+        }
+        in >> toplevelcount;
+    } else {
+        // The old format stored the note count as the first 32-bit value.
+        toplevelcount = header;
     }
 
-    file.close();
+    if (in.status() != QDataStream::Ok || toplevelcount > MaxNotes)
+        return;
 
-    listreeempty = false;
+    for (quint32 i = 0; i < toplevelcount; ++i) {
+        QString title;
+        QString content;
+
+        bool ok = false;
+        if (newFormat) {
+            in >> title >> content;
+            ok = (in.status() == QDataStream::Ok);
+        } else {
+            ok = readLegacyString(in, title) &&
+                 readLegacyString(in, content);
+        }
+
+        if (!ok)
+            return;
+
+        QTreeWidgetItem *it = new QTreeWidgetItem();
+        it->setText(0, title);
+        it->setText(1, content);
+        listree->addTopLevelItem(it);
+    }
+
+    if (toplevelcount > 0)
+        listreeempty = false;
+}
+
+bool MainWindow::writeListsToFile(bool showErrors)
+{
+    const int toplevelcount = listree->topLevelItemCount();
+
+    if (toplevelcount == 0) {
+        QFile::remove(Listfilename);
+        return true;
+    }
+
+    QSaveFile file(Listfilename);
+    if (!file.open(QFile::WriteOnly)) {
+        if (showErrors) {
+            QMessageBox::critical(this, tr("Save failed"),
+                                  tr("Could not open the notes file for writing:\n%1\n\n%2")
+                                      .arg(Listfilename, file.errorString()));
+        }
+        return false;
+    }
+
+    QDataStream out(&file);
+    if (!writeNotes(out, listree) || !file.commit()) {
+        if (showErrors) {
+            QMessageBox::critical(this, tr("Save failed"),
+                                  tr("Could not save your notes. Your changes may be lost.\n%1")
+                                      .arg(file.errorString()));
+        }
+        return false;
+    }
+
+    return true;
 }
 
 void MainWindow::write_lists()
 {
-QFile file(Listfilename);
-QTreeWidgetItem *it;
-QByteArray b;
-int i, len, toplevelcount;
-bool ok;
+    writeListsToFile(true);
+}
 
-    //number of categories
-    toplevelcount = listree->topLevelItemCount();
-
-    if (toplevelcount == 0) {//nothing to save
-        file.remove();
+void MainWindow::autosave()
+{
+    if (!dataModified)
         return;
-    }
-
-    ok = file.open(QFile::WriteOnly);
-    if (ok == false)
-        return;
-    QDataStream out(&file);
-
-    out << toplevelcount;
-
-    //loop over lists
-    for (i = 0; i < toplevelcount; i++){
-        it = listree->topLevelItem(i);
-
-        b = it->text(0).toLocal8Bit();
-        len = b.size() + 1;
-        out << len;
-        out.writeBytes(b.data(), len);
-
-        b = it->text(1).toLocal8Bit();
-        len = b.size() + 1;
-        out << len;
-        out.writeBytes(b.data(), len);
-    }
-
-    file.close();
+    if (writeListsToFile(false))
+        dataModified = false;
 }
 
 void MainWindow::save_lists_as_text()
 {
     QString txtfile, s;
     QTreeWidgetItem *it;
-    QTextDocument *doc;
     int i, toplevelcount;
-    bool ok;
 
     //txtfile.append (Homepath);
     txtfile.append ("Notes.txt");
     QFile file(txtfile);
-    ok = file.open(QFile::WriteOnly);
-    if (ok == false)
+    if (!file.open(QFile::WriteOnly))
         return;
+
     QTextStream out(&file);
 
     //number of categories
@@ -126,11 +210,9 @@ void MainWindow::save_lists_as_text()
     //loop over lists
     for (i = 0; i < toplevelcount; i++){
         it = listree->topLevelItem(i);
-
-        doc = new QTextDocument ();
-        doc->setHtml(it->text(1));
-        s = doc->toPlainText();
-        delete doc;
+        QTextDocument doc;
+        doc.setHtml(it->text(1));
+        s = doc.toPlainText();
 
         out << "\nTitle of note:";
         out << s;
@@ -144,59 +226,21 @@ void MainWindow::save_lists_as_text()
 
 void MainWindow::backup_notes()
 {
-QString BackupFilename;
+    const QString BackupFilename = Listfilename + ".backup";
+    const int toplevelcount = listree->topLevelItemCount();
 
-QTreeWidgetItem *it;
-QByteArray b;
-int i, len, toplevelcount;
-bool ok;
-
-    //create backup filename
-    BackupFilename = Listfilename;
-    //BackupFilename.append (getenv ("HOME"));
-    BackupFilename.append(".backup");
-    QFile file(BackupFilename);
-
-    //remove old backup
-    if (file.exists() == true) {
-        file.remove();
-    }
-
-    //save notes in new backup file
-
-    //number of categories
-    toplevelcount = listree->topLevelItemCount();
-
-    if (toplevelcount == 0) {//nothing to save
-        file.remove();
+    if (toplevelcount == 0) {
+        QFile::remove(BackupFilename);
         return;
     }
 
-    ok = file.open(QFile::WriteOnly);
-    if (ok == false)
+    QSaveFile file(BackupFilename);
+    if (!file.open(QFile::WriteOnly))
         return;
+
     QDataStream out(&file);
-
-    out << toplevelcount;
-
-    //loop over lists
-    for (i = 0; i < toplevelcount; i++){
-        it = listree->topLevelItem(i);
-
-        b = it->text(0).toLocal8Bit();
-        len = b.size() + 1;
-        out << len;
-        out.writeBytes(b.data(), len);
-
-        b = it->text(1).toLocal8Bit();
-        len = b.size() + 1;
-        out << len;
-        out.writeBytes(b.data(), len);
-    }
-
-    file.close();
+    if (!writeNotes(out, listree) || !file.commit())
+        return;
 
     statustext->setText(tr("Backed up \"Notes.jane.backup\" "));
-
 }
-

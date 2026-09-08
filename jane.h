@@ -20,36 +20,28 @@ email                : letapk@gmail.com
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QWidget>
-#include <QApplication>
 #include <QMainWindow>
-#include <QMenuBar>
-#include <QTreeWidget>
-#include <QPlainTextEdit>
-#include <QTextEdit>
-#include <QTextStream>
-#include <QPushButton>
-#include <QLabel>
-#include <QSettings>
-#include <QGroupBox>
-#include <QLineEdit>
-#include <QTextBrowser>
-#include <QFontDialog>
-#include <QMessageBox>
-#include <QDir>
-#include <QColorDialog>
-#include <QToolBar>
 #include <QTextCharFormat>
-#include <QFontComboBox>
-#include <QTranslator>
-#include <QActionGroup>
-#include <QtSpell-qt5/QtSpell.hpp>
+#include <QFont>
+#include <QPushButton>
+#include "QtSpell.hpp"
 
-#include <QLibraryInfo>
-//#include <QCheckBox>
-//#include <QVBoxLayout>
-//#include <QDialogButtonBox>
-//#include <QPushButton>
+class QMenu;
+class QToolBar;
+class QAction;
+class QFontComboBox;
+class QComboBox;
+class QTreeWidget;
+class QTreeWidgetItem;
+class QPushButton;
+class QTabWidget;
+class QSplitter;
+class QWidget;
+class QFrame;
+class QTextEdit;
+class QLabel;
+class QLineEdit;
+class QTimer;
 
 namespace Ui {
 class MainWindow;
@@ -76,11 +68,9 @@ class MainWindow : public QMainWindow
     bool listreeempty;
 
     QTabWidget *tabcontainer;
+    QSplitter *mainSplitter;
     QWidget *listed, *search, *prefs;
     QTextEdit *listeditor;
-
-    //text in editor
-    QString list_to_show;
 
     //search
     QLabel *searchboxlabel;
@@ -95,13 +85,14 @@ class MainWindow : public QMainWindow
     QPushButton *searchthisnotebut;
 
     //preferences
-    QGroupBox *tabbox;
     QPushButton *fontbut;
     QPushButton *backupbut;
+    QComboBox *spelllang;
 
     QFont curfont;
 
     QLabel *statustext;
+    QLabel *wordcount;
 
 
     //stores the path to the data subdirectory
@@ -112,19 +103,27 @@ class MainWindow : public QMainWindow
     QString Gnugplfilename;
     QString Helpfilename;
 
-    //dialog to change the default data directory
-    QDialog *Datadirdialog;
     //data subdirectory for this session
     QString Datadirectory;
 
+    QTimer *autosaveTimer;
+    bool dataModified = false;
+
     void resizeEvent(QResizeEvent *);
+
+    bool writeListsToFile(bool showErrors);
+    void autosave();
+    void updateWordCount();
+    void clearHighlights();
+
+    static QSize defaultWindowSize();
 
     //Q_OBJECT
 
     QtSpell::TextEditChecker* checker;
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(const QString &datadirectory, QWidget *parent = nullptr);
     ~MainWindow();
     friend class ComboBoxItemDelegate;
 
@@ -152,7 +151,7 @@ public slots:
     void cursorPositionChanged();
 
     void textFamily(const QFont &f);
-    void textSize(const QString &f);
+    void textSize(int i);
 
     void mergeFormatOnWordOrSelection(const QTextCharFormat &format);
 

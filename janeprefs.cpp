@@ -18,45 +18,82 @@ email                : letapk@gmail.com
 //Last modified 28 Jan 2024
 
 #include "jane.h"
-
-//userpath contains the path to the data subdirectory
-extern QString userpath;
+#include <QSettings>
+#include <QDir>
+#include <QFontDialog>
+#include <QApplication>
+#include <QSplitter>
+#include <QScreen>
+#include <QComboBox>
 
 void MainWindow::writeprefs()
 {
-    QSettings settings(tr("jane"), tr("jane"));
+    QSettings settings(QStringLiteral("jane"), QStringLiteral("jane"));
 
-    settings.setValue(tr("pos"), pos());//window position
+    settings.setValue(QStringLiteral("pos"), pos());//window position
 
-    settings.setValue(tr("size"), size());//window size
+    settings.setValue(QStringLiteral("size"), size());//window size
 
-    settings.setValue(tr("Font"), QString(curfont.toString()));//selected font
+    settings.setValue(QStringLiteral("font"), curfont.toString());//selected font
 
-    settings.setValue(tr("Defdatadir"), Datadirectory);
+    settings.setValue(QStringLiteral("defdatadir"), Datadirectory);
+
+    settings.setValue(QStringLiteral("splitter"), mainSplitter->saveState());
+
+    settings.setValue(QStringLiteral("spelllang"),
+                      spelllang->itemData(spelllang->currentIndex()).toString());
+}
+
+//ensure the window is visible on some screen; if the restored position lies
+//entirely off-screen (e.g. the display it was on was unplugged or the layout
+//changed), recenter on the primary screen
+static void ensureOnScreen(QWidget *win)
+{
+    const QRect frame = win->frameGeometry();
+
+    for (const QScreen *screen : QGuiApplication::screens()) {
+        if (frame.intersects(screen->availableGeometry()))
+            return;
+    }
+
+    QRect target = QGuiApplication::primaryScreen()->availableGeometry();
+    win->move(target.center() - QPoint(win->frameGeometry().width() / 2,
+                                       win->frameGeometry().height() / 2));
 }
 
 void MainWindow::readprefs()
 {
-//int i;
-QString s, s1;
-QFont f;
+    QSettings settings(QStringLiteral("jane"), QStringLiteral("jane"));
 
-    QSettings settings(tr("jane"), tr("jane"));
+    QPoint pos = settings.value(QStringLiteral("pos"), QPoint(20, 20)).toPoint();
 
-    QPoint pos = settings.value(tr("pos"), QPoint(20, 20)).toPoint();
+    QSize size = settings.value(QStringLiteral("size"), defaultWindowSize()).toSize();
 
-    QSize size = settings.value(tr("size"), QSize(800, 630)).toSize();
-
-    f = QApplication::font();
-    s1 = f.toString();
-    s = settings.value(tr("Font"), QString(s1)).toString();
+    QString s = settings.value(QStringLiteral("font"),
+                                QApplication::font().toString()).toString();
     curfont.fromString(s);
     QApplication::setFont(curfont);
 
-    s = settings.value(tr("Defdatadir"), userpath).toString();
+    //honor a previously stored data directory, falling back to the default
+    s = settings.value(QStringLiteral("defdatadir"), Datadirectory).toString();
+    if (QDir(s).exists())
+        Datadirectory = s;
+
+    mainSplitter->restoreState(
+        settings.value(QStringLiteral("splitter")).toByteArray());
+
+    //restore the spell check language (combo keeps "Automatic", i.e. an empty code)
+    const QString lang = settings.value(QStringLiteral("spelllang")).toString();
+    if (!lang.isEmpty())
+        checker->setLanguage(lang);
+    int langidx = spelllang->findData(lang);
+    if (langidx < 0)
+        langidx = 0;
+    spelllang->setCurrentIndex(langidx);
 
     resize(size);
     move(pos);
+    ensureOnScreen(this);
 }
 
 void MainWindow::select_font()

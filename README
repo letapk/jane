@@ -1,4 +1,4 @@
-Jane 0.2
+Jane 0.3
 ========
 
 What is Jane?
@@ -27,6 +27,18 @@ Availability
 ------------
 Jane is available as source code to compile on your own machine.
 
+Changes in version 0.3
+----------------------
+Ported to Qt 6.
+Added Ctrl-Q as a shortcut to quit the program.
+Debugged irregular behavior of font size changes in the editor.
+Added code to resize the window showing the note titles.
+Some fixes to user-interface behavior.
+A warning now pops-up when a second instance of Jane is opened without closing the first.
+Added warnings if the notes could not be saved for any reason.
+A language preference for the spell checking was added.
+Added a word count to right side of the status bar.
+
 Changes in version 0.2
 ----------------------
 Added spellcheck functionality. Wrongly spelled words are underlined and can be corrected
@@ -43,36 +55,40 @@ https://github.com/letapk/jane
 
 The repository is public. Anyone can check out the branch onto her local machine.
 
-In addition, you will need the libraries and developement files from Qt, which are
+To compile, you will need the libraries and developement files from Qt, which are
 available from the depository of your Linux distribution or from www.qt.io.
 
-You will also need the spellcheck package for Qt (libqtspell-qt5-dev) which may be available
-from the package manager of your distribution. Alternatively it can be obtained from
-GitHub ("https://github.com/Qt-Widgets/qtspell-spelling-checker").
+You will also need the spellcheck library for Qt (libqtspell-qt6) which should be available
+from the package manager of your Linux distribution. The header files required for compilation,
+"QtSpellExport.hpp" and "QtSpell.hpp" are part of the QtSpell package by Sandro Mani from Github at:
+https://github.com/manisandro/qtspell
+These are made available under the GNU General Public License version 3.0.
 
 Since the spellcheck code requires the enchant spell-checking library, that will have to be
-installed as well. This should be available through the package manager as well.
+installed as well. This should be available through your package manager.
 
 If you are using QtCreator, load the project file jane.pro which is available in the source
 package. Select the version you want to build (debug version or release version) and hit
-Ctrl-B. If there are no problems, this should build the binary.
+Ctrl-B.
 
-The program has been compiled and tested on version 5.15.3 of Qt, under Ubuntu
-22.04.3.
+If you prefer to work from the command line, create a Makefile by running qmake (or qmake6)
+on jane.pro, then rune make:
+>   qmake6 jane.pro
+>   make
 
-The binary may be stored locally in a directoriy separate from the source subdirectory,
+If there are no problems, either of the two approaches should build the binary.
+The program has been compiled and tested on version 6.11 of Qt6, under Suse Tumbleweed.
+
+The binary may be stored locally in a directory separate from the source subdirectory,
 depending on how QtCreator is configured. This location will be available within QtCreator.
-
-If you are not using QtCreator, running the comand:
-qmake jane.pro
-should create a Makefile for your system. Then, running:
-make
-should create a running binary.
 
 When the program is executed, Jane searches for a hidden subdirectory called
 “.jane”. If this is absent (which will be the case when it is executed the first
-time) it issues a notification that it will be created. Subsequently all data is
-stored in this subdirectory.
+time) it issues a notification that it will be created.
+
+Subsequently all data is stored in this subdirectory in a file named "Notes.jane".
+You should make backups of this file to recover from data loss or just as a
+precaution.
 
 Exit the program and copy the help and image files in the downloaded package to the
 hidden data subdirectory. Either use a file manager or open a terminal and do the
@@ -83,15 +99,6 @@ cp COPYING ~/.jane
 
 Remember to put the dot (".") in the right place. This will make the on-line help
 available when the program is running.
-
-If you are using QtCreator, the location of the locally compiled binary will be
-available from within QtCreator. If not, the binary will be in the same location as the
-source files. From this location copy the binary to a place from where everyone working
-on the computer can run it.
-
-From the subdirectory containing the binary do:
-sudo cp ./jane /usr/local/bin/jane
-Enter your user password when prompted.
 
 What is the copying policy?
 ---------------------------

@@ -21,8 +21,27 @@ email                : letapk@gmail.com
 #include <QFileDialog>
 #include <QImageReader>
 #include <QDesktopServices>
-
-extern QString userpath;
+#include <QScreen>
+#include <QApplication>
+#include <QAction>
+#include <QActionGroup>
+#include <QToolBar>
+#include <QComboBox>
+#include <QFontComboBox>
+#include <QFontDatabase>
+#include <QColorDialog>
+#include <QTextBrowser>
+#include <QWidget>
+#include <QFile>
+#include <QDir>
+#include <QPixmap>
+#include <QTreeWidgetItem>
+#include <QMessageBox>
+#include <QCloseEvent>
+#include <QLineEdit>
+#include <QLabel>
+#include <QRegularExpression>
+#include <iostream>
 
 void MainWindow::about()
 //open a window to show program information and copyright license
@@ -37,7 +56,12 @@ bool ok;
         return;
 
     gnugpl = new QTextBrowser ();
-    gnugpl->setGeometry(10, 10, 800, 600);
+    gnugpl->setAttribute(Qt::WA_DeleteOnClose);
+    //size the dialog to fit the screen, keeping a sensible default
+    QSize avail(800, 600);
+    if (QGuiApplication::primaryScreen())
+        avail = QGuiApplication::primaryScreen()->availableGeometry().size();
+    gnugpl->resize(qMin(800, avail.width() - 40), qMin(600, avail.height() - 40));
     gnugpl->setWindowTitle (QObject::tr("About Jane"));
     gnugpl->setPlainText(in.readAll());
     gnugpl->setAlignment(Qt::AlignLeft);
@@ -56,17 +80,18 @@ QMessageBox msgBox;
     ok = file.exists();
     if (ok == false) {
         s1 = QObject::tr("The help file was not found.");
+        s1.append (QLatin1Char(' '));
         s1.append (QObject::tr("Please make sure that it is present in the hidden Jane data directory."));
 
         msgBox.setText(s1);
         msgBox.exec();
     }
     else {
-        QDesktopServices::openUrl (QUrl (Helpfilename));
+        QDesktopServices::openUrl (QUrl::fromLocalFile(Helpfilename));
     }
 }
 
-void check_qtdata_dir ()
+void check_qtdata_dir (const QString &userpath)
 {
 QString qtpath, s1;
 QDir qtdir;
@@ -102,38 +127,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
-//move and shift the widgets when the window size changes
+//all widget geometry is now managed by layouts
 {
-int w, h;
-
-    w = width();
-    h = height();
-
-    tb->resize(w - 20, 37);
-
-    //resize the tree
-    listree->setGeometry(10, 110, 300, h - 155);
-
-    //resize the tabcontainer
-    tabcontainer->resize(w - 320, h - 115);
-
-    listeditor->setGeometry(5, 5, tabcontainer->width() - 15, tabcontainer->height() - 55);
-    //search->setGeometry(10, 10, tabcontainer->width() - 20, tabcontainer->height() - 55);
-    searchresults->setGeometry(5, 90, tabcontainer->width() - 15, tabcontainer->height() - 140);
-    //move the status text area
-    statustext->setGeometry(10, h - 45, 300, 35);
-
-    //move the search this note area
-    searchthisnotelabel->setGeometry(420, h - 45, 100, 35);
-    searchthisnotetextbox->setGeometry(525, h - 40, 350, 35);
-    searchthisnotebut->setGeometry(880, h - 40, 80, 35);
-
-    //this makes the font size box visible on expanding the window and fixes
-    //a bug which would prevent it from showing if the user has clicked the extension
-    //button on the toolbar
-    comboFont->setVisible(true);
-    comboSize->setVisible(true);
-
     //pass the event up the chain
     QWidget::resizeEvent(event);
 
@@ -142,9 +137,8 @@ int w, h;
 void MainWindow::setuptoolbar()
 {
     //toolbar for the editor
-    tb = new QToolBar;
-    tb->setParent (this);
-    tb->setGeometry(10, 37, 1080, 35);
+    tb = new QToolBar(tr("Format"), this);
+    addToolBar (tb);
     tb->setFloatable (false);
     tb->setMovable(false);
 
@@ -154,7 +148,7 @@ void MainWindow::setuptoolbar()
     QFont bold;
     bold.setBold(true);
     actionTextBold->setFont(bold);
-    connect(actionTextBold, SIGNAL(triggered()), this, SLOT(textBold()));
+    connect(actionTextBold, &QAction::triggered, this, &MainWindow::textBold);
     tb->addAction(actionTextBold);
     actionTextBold->setCheckable(true);
 
@@ -164,7 +158,7 @@ void MainWindow::setuptoolbar()
     QFont italic;
     italic.setItalic(true);
     actionTextItalic->setFont(italic);
-    connect(actionTextItalic, SIGNAL(triggered()), this, SLOT(textItalic()));
+    connect(actionTextItalic, &QAction::triggered, this, &MainWindow::textItalic);
     tb->addAction(actionTextItalic);
     actionTextItalic->setCheckable(true);
 
@@ -174,12 +168,12 @@ void MainWindow::setuptoolbar()
     QFont underline;
     underline.setUnderline(true);
     actionTextUnderline->setFont(underline);
-    connect(actionTextUnderline, SIGNAL(triggered()), this, SLOT(textUnderline()));
+    connect(actionTextUnderline, &QAction::triggered, this, &MainWindow::textUnderline);
     tb->addAction(actionTextUnderline);
     actionTextUnderline->setCheckable(true);
 
     QActionGroup *grp = new QActionGroup(this);
-    connect(grp, SIGNAL(triggered(QAction*)), this, SLOT(textAlign(QAction*)));
+    connect(grp, &QActionGroup::triggered, this, &MainWindow::textAlign);
 
     actionAlignLeft = new QAction(QIcon::fromTheme("", QIcon(":/images/textleft.png")),tr("&Left, Ctrl-L"), grp);
     actionAlignCenter = new QAction(QIcon::fromTheme("",QIcon(":/images/textcenter.png")),tr("C&enter, Ctrl-E"), grp);
@@ -203,7 +197,7 @@ void MainWindow::setuptoolbar()
 
     QAction *actionInsertImage= new QAction(QIcon::fromTheme("", QIcon(":/images/insert-image.png")), tr("&Insert image"), this);
     actionInsertImage->setPriority(QAction::LowPriority);
-    connect(actionInsertImage, SIGNAL(triggered()), this, SLOT(insertImage()));
+    connect(actionInsertImage, &QAction::triggered, this, &MainWindow::insertImage);
     actionInsertImage->setCheckable(true);
 
     tb->addAction(actionInsertImage);
@@ -211,23 +205,24 @@ void MainWindow::setuptoolbar()
     QPixmap pix(16, 16);
     pix.fill(Qt::black);
     actionTextColor = new QAction(pix, tr("&Color..."), this);
-    connect(actionTextColor, SIGNAL(triggered()), this, SLOT(textColor()));
+    connect(actionTextColor, &QAction::triggered, this, &MainWindow::textColor);
     tb->addAction(actionTextColor);
 
     comboFont = new QFontComboBox(tb);
     tb->addWidget(comboFont);
-    connect(comboFont, SIGNAL(currentFontChanged(QFont)), this, SLOT(textFamily(QFont)));
+    connect(comboFont, &QFontComboBox::currentFontChanged, this, &MainWindow::textFamily);
 
     comboSize = new QComboBox(tb);
     comboSize->setObjectName("comboSize");
     tb->addWidget(comboSize);
-    comboSize->setEditable(true);
+    comboSize->setEditable(false);
 
     QFontDatabase db;
-    foreach(int size, db.standardSizes())
-        comboSize->addItem(QString::number(size));
+    for (int size : db.standardSizes())
+        comboSize->addItem(QString::number(size), size);
 
-    connect(comboSize, SIGNAL(activated(QString)), this, SLOT(textSize(QString)));
+    //connect(comboSize, SIGNAL(activated(QString)), this, SLOT(textSize(QString)));
+    connect(comboSize, QOverload<int>::of(&QComboBox::activated), this, &MainWindow::textSize);
     comboSize->setCurrentIndex(comboSize->findText(QString::number(QApplication::font().pointSize())));
 }
 
@@ -376,14 +371,16 @@ void MainWindow::textFamily(const QFont &f)
     mergeFormatOnWordOrSelection(fmt);
 }
 
-void MainWindow::textSize(const QString &p)
+void MainWindow::textSize(int i)
 {
-    qreal pointSize = p.toFloat();
-    if (p.toFloat() > 0) {
-        QTextCharFormat fmt;
-        fmt.setFontPointSize(pointSize);
-        mergeFormatOnWordOrSelection(fmt);
-    }
+    QTextCharFormat fmt;
+
+    int j = comboSize->itemData(i).toInt();
+    fmt.setFontPointSize(j);
+    mergeFormatOnWordOrSelection(fmt);
+
+    statustext->setText(QString::number(j));
+
 }
 
 void MainWindow::mergeFormatOnWordOrSelection(const QTextCharFormat &format)
@@ -412,7 +409,6 @@ QString s;
 
 void MainWindow::search_notes()
 {
-QStringList *result;
 QTreeWidgetItem *it;
 QString b1, b2;
 int i, toplevelcount;
@@ -423,9 +419,6 @@ QString s;
         statustext->setText(tr("Please enter text in search box"));
         return;
     }
-    result = new QStringList;
-    result->append(tr(""));
-    searchresults->append(s);
 
     //number of categories
     toplevelcount = listree->topLevelItemCount();
@@ -435,16 +428,18 @@ QString s;
         it = listree->topLevelItem(i);
 
         //title of note
-        b1 = it->text(0).toLocal8Bit();
-        //note itself
-        b2 = it->text(1).toLocal8Bit();
+        b1 = it->text(0);
+        //note itself, converted to plain text so HTML markup is not matched
+        QTextDocument doc;
+        doc.setHtml(it->text(1));
+        b2 = doc.toPlainText();
 
         if (b2.contains(searchtxt, Qt::CaseInsensitive) == true) {
-            s = QString (tr("Found in the note number %1 titled \"%2\"").arg(i+1).arg(b1));
-            result->append(s);
+            s = QString (tr("%1 : Found in note number %2 titled \"%3\"").arg(searchtxt).arg(i+1).arg(b1));
             searchresults->append(s);
         }
     }
+    searchresults->append("\n");
 }
 
 void MainWindow::search_clear_notes()
@@ -452,41 +447,77 @@ void MainWindow::search_clear_notes()
     searchresults->clear();
 }
 
+void MainWindow::updateWordCount()
+{
+    int words = 0;
+    const QString text = listeditor->toPlainText();
+    if (!text.isEmpty())
+        words = text.split(QRegularExpression(QLatin1String("\\s+")),
+                           Qt::SkipEmptyParts).size();
+    wordcount->setText(QObject::tr("Words: %1").arg(words));
+}
+
+void MainWindow::clearHighlights()
+{
+    listeditor->setExtraSelections(QList<QTextEdit::ExtraSelection>());
+}
+
 void MainWindow::search_this_note()
 {
-QTextEdit *editor;
-bool found;
-QMessageBox msgBox;
-int ret;
-
-    editor = listeditor;
+    QTextEdit *editor = listeditor;
+    QTextDocument *doc = editor->document();
 
     //get string to search for from text box
     searchtxt = searchthisnotetextbox->text();
+
+    //highlight every match in the note so the user can see all results
+    QList<QTextEdit::ExtraSelection> selections;
+    if (!searchtxt.isEmpty()) {
+        QTextCursor scan(doc);
+        for (;;) {
+            QTextCursor hit = doc->find(searchtxt, scan);
+            if (hit.isNull())
+                break;
+            QTextEdit::ExtraSelection sel;
+            sel.cursor = hit;
+            sel.format.setBackground(QColor(255, 255, 153));
+            selections.append(sel);
+            scan = hit;
+        }
+    }
+    editor->setExtraSelections(selections);
+
     if (searchtxt.isEmpty() == true) {
         statustext->setText(tr("Please enter text in search box"));
         return;
     }
 
-    found = editor->find (searchtxt);
-    if (found == false) {
-        msgBox.setText("Reached end of note.\nDo you want to search from the beginning?");
+    //remember where the search began so we can stop on a full second pass
+    const int startpos = editor->textCursor().position();
+
+    bool found = editor->find(searchtxt);
+    if (!found) {
+        QMessageBox msgBox;
+        msgBox.setText(tr("Reached end of note.\nDo you want to search from the beginning?"));
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msgBox.setDefaultButton(QMessageBox::No);
 
-        ret = msgBox.exec();
-
-        switch (ret) {
-        case QMessageBox::Yes:
-            editor->moveCursor(QTextCursor::Start);
-            search_this_note();
-            break;
-        case QMessageBox::No:
+        if (msgBox.exec() != QMessageBox::Yes) {
+            editor->setFocus();
             return;
-            break;
-        default:
-            // should never be reached
-            break;
         }
+
+        editor->moveCursor(QTextCursor::Start);
+        found = editor->find(searchtxt);
+    }
+
+    editor->setFocus();
+
+    if (!found) {
+        statustext->setText(tr("\"%1\" not found in this note").arg(searchtxt));
+        QTextCursor c = editor->textCursor();
+        int safePos = qMin(startpos, editor->document()->characterCount() - 1);
+        c.setPosition(qMax(0, safePos));
+        editor->setTextCursor(c);
     }
 }
