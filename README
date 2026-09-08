@@ -63,6 +63,7 @@ from the package manager of your Linux distribution. The header files required f
 "QtSpellExport.hpp" and "QtSpell.hpp" are part of the QtSpell package by Sandro Mani from Github at:
 https://github.com/manisandro/qtspell
 These are made available under the GNU General Public License version 3.0.
+Many thanks, Sandro, for the extremely useful utility.
 
 Since the spellcheck code requires the enchant spell-checking library, that will have to be
 installed as well. This should be available through your package manager.
